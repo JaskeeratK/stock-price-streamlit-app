@@ -143,7 +143,7 @@ st.sidebar.metric("RMSE", f"{rmse:.2f}")
 # st.pyplot(fig2)
 # Plot Predictions (Date-Aligned)
 st.subheader("📊 Predicted vs Actual Prices")
-
+look_back = time_step
 # Align prediction dates with actual data
 train_dates = data.index[look_back:look_back + len(train_predict)]
 test_dates = data.index[len(train_predict) + (look_back * 2) + 1:len(scaled_data) - 1]
