@@ -125,20 +125,37 @@ st.sidebar.subheader(" Model Performance")
 st.sidebar.metric("RMSE", f"{rmse:.2f}")
 
 # Plot Predictions
-st.subheader("🔍 Predicted vs Actual Prices")
-look_back = time_step
-train_plot = np.empty_like(scaled_data)
-train_plot[:, :] = np.nan
-train_plot[look_back:len(train_predict) + look_back, :] = train_predict
+# st.subheader("🔍 Predicted vs Actual Prices")
+# look_back = time_step
+# train_plot = np.empty_like(scaled_data)
+# train_plot[:, :] = np.nan
+# train_plot[look_back:len(train_predict) + look_back, :] = train_predict
 
-test_plot = np.empty_like(scaled_data)
-test_plot[:, :] = np.nan
-test_plot[len(train_predict) + (look_back * 2) + 1:len(scaled_data) - 1, :] = test_predict
+# test_plot = np.empty_like(scaled_data)
+# test_plot[:, :] = np.nan
+# test_plot[len(train_predict) + (look_back * 2) + 1:len(scaled_data) - 1, :] = test_predict
 
-fig2, ax2 = plt.subplots()
-ax2.plot(actual_prices, label='Actual Price', color='gray')
-ax2.plot(train_plot, label='Train Prediction', color='green')
-ax2.plot(test_plot, label='Test Prediction', color='orange')
+# fig2, ax2 = plt.subplots()
+# ax2.plot(actual_prices, label='Actual Price', color='gray')
+# ax2.plot(train_plot, label='Train Prediction', color='green')
+# ax2.plot(test_plot, label='Test Prediction', color='orange')
+# ax2.legend()
+# st.pyplot(fig2)
+# Plot Predictions (Date-Aligned)
+st.subheader("📊 Predicted vs Actual Prices")
+
+# Align prediction dates with actual data
+train_dates = data.index[look_back:look_back + len(train_predict)]
+test_dates = data.index[len(train_predict) + (look_back * 2) + 1:len(scaled_data) - 1]
+
+fig2, ax2 = plt.subplots(figsize=(10, 5))
+ax2.plot(data.index, actual_prices, label='Actual Price', color='gray')
+ax2.plot(train_dates, train_predict, label='Train Prediction', color='green')
+ax2.plot(test_dates, test_predict, label='Test Prediction', color='orange')
+
+ax2.set_title(f"Predicted vs Actual Prices for {company_name}")
+ax2.set_xlabel("Date")
+ax2.set_ylabel("Price (INR)")
 ax2.legend()
 st.pyplot(fig2)
 
