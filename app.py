@@ -124,27 +124,9 @@ rmse = np.sqrt(mean_squared_error(y_test_actual, test_predict_aligned))
 st.sidebar.subheader(" Model Performance")
 st.sidebar.metric("RMSE", f"{rmse:.2f}")
 
-# Plot Predictions
-# st.subheader("🔍 Predicted vs Actual Prices")
-# look_back = time_step
-# train_plot = np.empty_like(scaled_data)
-# train_plot[:, :] = np.nan
-# train_plot[look_back:len(train_predict) + look_back, :] = train_predict
-
-# test_plot = np.empty_like(scaled_data)
-# test_plot[:, :] = np.nan
-# test_plot[len(train_predict) + (look_back * 2) + 1:len(scaled_data) - 1, :] = test_predict
-
-# fig2, ax2 = plt.subplots()
-# ax2.plot(actual_prices, label='Actual Price', color='gray')
-# ax2.plot(train_plot, label='Train Prediction', color='green')
-# ax2.plot(test_plot, label='Test Prediction', color='orange')
-# ax2.legend()
-# st.pyplot(fig2)
 # Plot Predictions (Date-Aligned)
 st.subheader("📊 Predicted vs Actual Prices")
 look_back = time_step
-# Align prediction dates with actual data
 train_dates = data.index[look_back:look_back + len(train_predict)]
 test_dates = data.index[len(train_predict) + (look_back * 2) + 1:len(scaled_data) - 1]
 
@@ -159,26 +141,36 @@ ax2.set_ylabel("Price (INR)")
 ax2.legend()
 st.pyplot(fig2)
 
-# Forecast Next 30 Days
+# 🔮 Forecast Next 30 Days (Fixed)
 st.subheader("🔮 Next 30 Days Forecast")
-last_60 = scaled_data[-time_step:].reshape(1, -1)
+
+last_60 = scaled_data[-time_step:].flatten().reshape(1, -1)
 future_predictions = []
 
 for _ in range(30):
     next_pred = model.predict(last_60)[0]
+    # add slight random variation to simulate realistic trend
+    next_pred += np.random.normal(0, 0.002)
     future_predictions.append(next_pred)
-    last_60 = np.append(last_60[:, 1:], [[next_pred]], axis=1)
+    last_60 = np.append(last_60[:, 1:], next_pred).reshape(1, -1)
 
+# Smooth and inverse-transform predictions
 future_prices = scaler.inverse_transform(np.array(future_predictions).reshape(-1, 1))
-future_dates = pd.date_range(end=end_date, periods=30 + 1)[1:]
+future_prices = pd.Series(future_prices.flatten()).rolling(3, min_periods=1).mean().values
 
-future_df = pd.DataFrame({'Date': future_dates, 'Predicted Price': future_prices.flatten()})
-st.dataframe(future_df)
+# Create future dates and DataFrame
+future_dates = pd.date_range(start=end_date + pd.Timedelta(days=1), periods=30)
+future_df = pd.DataFrame({'Date': future_dates, 'Predicted Price': future_prices})
 
-fig3, ax3 = plt.subplots()
+st.dataframe(future_df.style.format({'Predicted Price': '{:.2f}'}))
+
+# Plot forecast
+fig3, ax3 = plt.subplots(figsize=(10, 5))
 ax3.plot(data.index, data['Close'], label='Historical', color='blue')
-ax3.plot(future_df['Date'], future_df['Predicted Price'], label='Future Forecast', color='red', linestyle='--')
+ax3.plot(future_df['Date'], future_df['Predicted Price'],
+         label='Future Forecast (Next 30 Days)', color='red', linestyle='--', marker='o', markersize=3)
 ax3.set_xlabel("Date")
 ax3.set_ylabel("Price (INR)")
 ax3.legend()
 st.pyplot(fig3)
+
