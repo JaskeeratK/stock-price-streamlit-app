@@ -40,6 +40,32 @@ symbols = st.sidebar.multiselect(
     available_stocks,
     default=[]
 )
+# Compare Selected Stocks
+if symbols:
+    st.subheader("Compare Stock Performance")
+
+    combined_df = pd.DataFrame()
+
+    # Fetch and merge all comparison stocks
+    for sym in symbols:
+        df = yf.download(sym, start=start_date, end=end_date, auto_adjust=True)
+        if not df.empty:
+            combined_df[sym] = df['Close']
+
+    if not combined_df.empty:
+        # Ensure consistent date index and fill missing values
+        combined_df = combined_df.sort_index().fillna(method='ffill')
+
+        st.write("### Closing Price Comparison")
+        st.line_chart(combined_df)
+
+        # Optional: normalize to compare relative performance
+        normalized = combined_df / combined_df.iloc[0] * 100
+        st.write("### Normalized Performance (Base = 100)")
+        st.line_chart(normalized)
+
+    else:
+        st.warning("No valid data for the selected comparison stocks.")
 
 # Default message before selection
 if company_name == "-- Select a Company --":
